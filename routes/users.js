@@ -7,14 +7,15 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 router.get('/login', function (req, res, next){
-  if (req.session.userName) {
-    console.log('1')
-    res.json({
-      code: 0,
-      type: 'index'
-    })
+  const {username, psw}=req.query
+  if (req.session[username]) { // 如果有session
+    if (req.session[username] === username) { // 如果该用户已经登陆过
+      res.json({
+        code: 1,
+        type: 'index'
+      })
+    }
   } else {
-    const {username, psw}=req.query
     let selectSql="select * from opinfo where oname='" + username + "' and pwd='" +psw+"'"
     connection.query(selectSql, function (err, rows) {
       if (err) {
@@ -24,7 +25,7 @@ router.get('/login', function (req, res, next){
         })
       } else {
         if (rows.length > 0) {
-          req.session.userName=username
+          req.session[username]=username
           res.json({
             code: 0,
             msg: {username, isSuper: rows[0].isSuper}
@@ -89,8 +90,9 @@ router.get('/deleteuser', function (req, res, next) {
   })
 })
 router.get('/loginout', function (req,res,next) {
-  if (req.session.userName) {
-    req.session.userName=null
+  const {username} = req.query
+  if (req.session[username]) {
+    req.session[username]=null
     res.json({
       code: 0,
       msg: 'success'
@@ -103,7 +105,8 @@ router.get('/loginout', function (req,res,next) {
   }
 })
 router.get('/authrize',function (req, res, next) {
-  if (req.session.userName) {
+  const {username} = req.query
+  if (req.session[username]) {
     res.json({
       code: 0,
       msg: 'ok',
